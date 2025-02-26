@@ -2,7 +2,7 @@
 
 FROM ghcr.io/linuxserver/unrar:latest as unrar
 
-FROM ghcr.io/linuxserver/baseimage-alpine:edge
+FROM ghcr.io/linuxserver/baseimage-alpine:3.21
 
 ARG BUILD_DATE
 ARG TAG=4.1.0-beta.1
@@ -52,9 +52,11 @@ RUN \
   git submodule update && \
   rm -rf .git && \
   sed -i -e 's/set(GTKMM4_MINIMUM 4.11.1)/set(GTKMM4_MINIMUM 4.10.0)/g' CMakeLists.txt && \
-  sed -i -e 's/set(TR_VERSION_MINOR "1")/set(TR_VERSION_MINOR "0")/g' CMakeLists.txt && \
-  sed -i -e 's/set(TR_VERSION_PATCH "0")/set(TR_VERSION_PATCH "5")/g' CMakeLists.txt && \
-  sed -i -e 's/set(TR_VERSION_DEV TRUE)/set(TR_VERSION_DEV FALSE)/g' CMakeLists.txt && \
+  sed -i -e 's/^set(TR_VERSION_MAJOR.*/set(TR_VERSION_MAJOR "4")/' CMakeLists.txt && \
+  sed -i -e 's/^set(TR_VERSION_MINOR.*/set(TR_VERSION_MINOR "0")/' CMakeLists.txt && \
+  sed -i -e 's/^set(TR_VERSION_PATCH.*/set(TR_VERSION_PATCH "0")/' CMakeLists.txt && \
+  sed -i -e 's/^set(TR_VERSION_BETA_NUMBER.*/set(TR_VERSION_BETA_NUMBER "")/' CMakeLists.txt && \
+  sed -i -e 's/^set(TR_VERSION_DEV TRUE)/set(TR_VERSION_DEV FALSE)/' CMakeLists.txt && \
   npm --prefix web ci && \
   npm --prefix web run build && \
   echo "**** build ****" && \
