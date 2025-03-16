@@ -5,7 +5,7 @@ FROM ghcr.io/linuxserver/unrar:latest as unrar
 FROM ghcr.io/linuxserver/baseimage-alpine:3.21
 
 ARG BUILD_DATE
-ARG TAG=4.1.0-beta.1
+ARG TAG=4.1.0-beta.2
 ARG VERSION=$TAG
 ARG TRANSMISSION_VERSION
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
@@ -28,6 +28,7 @@ RUN \
     libdeflate-dev \
     libevent-dev \
     libpsl-dev \
+    libnatpmp-dev \
     llvm \
     miniupnpc-dev \
     npm \
