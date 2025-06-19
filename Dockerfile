@@ -2,11 +2,12 @@
 
 FROM ghcr.io/linuxserver/unrar:latest as unrar
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.21
+FROM ghcr.io/linuxserver/baseimage-alpine:3.22
 
 ARG BUILD_DATE
 ARG TAG=4.1.0-beta.2
-ARG VERSION=$TAG
+ARG BUILD_NUMBER=1
+ARG VERSION=$TAG-$BUILD_NUMBER
 ARG TRANSMISSION_VERSION
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="machsix"
@@ -14,6 +15,12 @@ LABEL maintainer="machsix"
 # Note: This rebuilds the web UI to avoid issues such as https://github.com/transmission/transmission/issues/6632
 # Note: This downgrades GTKMM4 as it's outdated on alpine https://pkgs.alpinelinux.org/package/edge/community/x86/gtkmm4
 # Note: This deletes .git to build as release not debug build
+COPY alpine/transmission-daemon.pre-install    /tmp/
+COPY alpine/transmission-daemon.confd          /etc/conf.d/transmission-daemon
+COPY alpine/transmission-daemon.initd          /etc/init.d/transmission-daemon
+COPY alpine/transmission-daemon.logrotate      /etc/logrotate.d/transmission-daemon
+COPY alpine/transmission-daemon.post-upgrade   /tmp/
+
 
 RUN \
   echo "**** install build packages ****" && \
@@ -24,7 +31,6 @@ RUN \
     curl-dev \
     dbus-glib-dev \
     git \
-    gtkmm4-dev \
     libdeflate-dev \
     libevent-dev \
     libpsl-dev \
@@ -33,15 +39,17 @@ RUN \
     miniupnpc-dev \
     npm \
     openssl-dev \
-    qt6-qtsvg-dev \
-    qt6-qttools-dev \
     samurai && \
   echo "**** install packages ****" && \
   apk add --no-cache \
     findutils \
     libdeflate \
     libevent \
+    libnatpmp \
     miniupnpc \
+    mediainfo \
+    ffmpegthumbnailer \
+    ffmpeg \
     p7zip \
     python3 && \
   echo "**** compile transmission ****" && \
@@ -88,18 +96,20 @@ RUN \
 		-DWITH_SYSTEMD=OFF && \
 	cmake --build build && \
   echo "**** manuall run pre-instal  from aports ****" && \
-  curl -o "/tmp/transmission-daemon.pre-install" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.pre-install" && \
   chmod +x /tmp/transmission-daemon.pre-install && /tmp/transmission-daemon.pre-install && \
   echo "**** install transmission ****" && \
+  # wget -qO "/tmp/transmission-daemon.pre-install" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.pre-install" && \
+  # wget -qO "/etc/conf.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.confd" && \
+  # wget -qO "/etc/init.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.initd" && \
+  # wget -qO "/etc/logrotate.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.logrotate" && \
+  # wget -qO "/tmp/transmission-daemon.post-upgrade" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.post-upgrade" && \
   cmake --install build && \
   mkdir -p /etc/conf.d/ && \
   mkdir -p /etc/init.d/ && \
   echo "**** manually copy config from aports ****" && \
-  curl -o "/etc/conf.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.confd" && \
-  curl -o "/etc/init.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.initd" && \
-  chmod +x /etc/init.d/transmission-daemon && \
-  curl -o "/etc/logrotate.d/transmission-daemon" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.logrotate" && \
-  curl -o "/tmp/transmission-daemon.post-upgrade" "https://git.alpinelinux.org/aports/plain/community/transmission/transmission-daemon.post-upgrade" && \
+  chmod 755 /etc/init.d/transmission-daemon && \
+  chmod 644 /etc/conf.d/transmission-daemon && \
+  chmod 644 /etc/logrotate.d/transmission-daemon && \
   chmod +x /tmp/transmission-daemon.post-upgrade && /tmp/transmission-daemon.post-upgrade && \
   echo "**** cleanup ****" && \
   apk del --purge \

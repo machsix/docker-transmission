@@ -43,10 +43,12 @@ jobs:
         run: |
           # get the tag from Dockerfile
           repo="transmission/transmission"
-          tag=$(grep -oP 'ARG TAG=\K[^ ]+' Dockerfile)
+          tag=$(grep '^ARG TAG=' Dockerfile | sed 's/ARG TAG=//')
+          build=$(grep '^ARG BUILD_NUMBER=' Dockerfile | sed 's/^ARG BUILD_NUMBER=//')
           # url=$(curl -sSL --retry 5 "https://api.github.com/repos/$repo/releases" | jq -r ".[] | select(.tag_name == \"$tag\") | .url")
 
           echo "tag=${tag}" >> $GITHUB_OUTPUT
+          echo "build=${build}" >> $GITHUB_OUTPUT
           # echo "url=${url}" >> $GITHUB_OUTPUT
           echo "pkg=transmission" >> $GITHUB_OUTPUT
 
@@ -78,7 +80,7 @@ jobs:
             ghcr.io/${{ github.actor }}/${{ steps.tag.outputs.pkg }}
           tags: |
             type=raw,value=latest,enable=true
-            type=raw,value=${{ steps.tag.outputs.tag }},enable=true
+            type=raw,value=${{ steps.tag.outputs.tag }}-${{ steps.tag.outputs.build }},enable=true
           flavor: latest=auto
 
       - name: Build and push Docker image
